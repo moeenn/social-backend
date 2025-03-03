@@ -6,12 +6,11 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type User struct {
 	ID       uuid.UUID
 	Email    string
-	Password pgtype.Text
+	Password string
 	Role     string
 }

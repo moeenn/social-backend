@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const userByEmail = `-- name: UserByEmail :one
@@ -57,7 +56,7 @@ returning id, email, password, role
 type UserCreateParams struct {
 	ID       uuid.UUID
 	Email    string
-	Password pgtype.Text
+	Password string
 	Role     string
 }
 
@@ -132,6 +131,17 @@ func (q *Queries) UserList(ctx context.Context, arg UserListParams) ([]User, err
 	return items, nil
 }
 
+const userListCount = `-- name: UserListCount :one
+select count(*) from users
+`
+
+func (q *Queries) UserListCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, userListCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const userUpdate = `-- name: UserUpdate :one
 update users
 set role = $2, password = $3
@@ -142,7 +152,7 @@ returning id, email, password, role
 type UserUpdateParams struct {
 	ID       uuid.UUID
 	Role     string
-	Password pgtype.Text
+	Password string
 }
 
 func (q *Queries) UserUpdate(ctx context.Context, arg UserUpdateParams) (User, error) {

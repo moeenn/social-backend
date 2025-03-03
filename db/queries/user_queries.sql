@@ -3,6 +3,9 @@ insert into users (id, email, password, role)
 values ($1, $2, $3, $4)
 returning *;
 
+-- name: UserListCount :one
+select count(*) from users;
+
 -- name: UserList :many
 select * from users
 limit $1
