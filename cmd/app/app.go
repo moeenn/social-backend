@@ -56,6 +56,11 @@ func run(ctx context.Context) error {
 		api.POST("/register", authController.RegisterNewUser)
 	}
 
+	// ---------------------------------------------------------------------------
+	//
+	// start server process.
+	//
+	// ---------------------------------------------------------------------------
 	address := config.Server.Address()
 	return router.Start(address)
 }
