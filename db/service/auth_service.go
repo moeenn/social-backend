@@ -28,7 +28,7 @@ func NewAuthService(db *models.Queries, jwtConfig *config.JwtConfig) *AuthServic
 }
 
 func (s *AuthService) RegisterNewUser(ctx context.Context, input models.UserCreateParams) (*models.User, error) {
-	passwordHash, err := hash.HashPassword(input.Password)
+	passwordHash, err := hash.HashPassword(input.Password, hash.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
