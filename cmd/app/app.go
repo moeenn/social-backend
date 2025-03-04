@@ -41,6 +41,7 @@ func run(ctx context.Context) error {
 	models := models.New(conn)
 	authService := service.NewAuthService(models, config.Jwt)
 	authController := controller.NewAuthController(logger, authService)
+	// authMiddleware := middleware.NewAuthMiddleware(config.Jwt, config.Auth)
 
 	// ---------------------------------------------------------------------------
 	//
@@ -54,6 +55,7 @@ func run(ctx context.Context) error {
 	{
 		api.POST("/login", authController.Login)
 		api.POST("/register", authController.RegisterNewUser)
+		// api.GET("/protected", protectedHandler.ProtectedRoute, authMiddleware.IsLoggedIn)
 	}
 
 	// ---------------------------------------------------------------------------
@@ -72,3 +74,20 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+// TODO: remove after testing.
+// type ProtectedHandler struct {
+// 	authConfig *config.AuthConfig
+// }
+
+// func (h *ProtectedHandler) ProtectedRoute(c echo.Context) error {
+// 	user, err := server.CurrentUser(c, h.authConfig.AuthUserContextKey)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return c.JSON(http.StatusOK, map[string]any{
+// 		"message":      "you have reached a protected route",
+// 		"current_user": user,
+// 	})
+// }
