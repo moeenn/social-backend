@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type TokenPayload struct {
-	Id    string
+	Id    uuid.UUID
 	Email string
 	Role  string
 }
@@ -72,6 +73,11 @@ func VerifyToken(tokenString string, config *JwtConfig) (*TokenPayload, error) {
 		return nil, fmt.Errorf("invalid token claims")
 	}
 
+	parsedUserId, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+
 	expiry, err := token.Claims.GetExpirationTime()
 	if err != nil {
 		return nil, err
@@ -82,7 +88,7 @@ func VerifyToken(tokenString string, config *JwtConfig) (*TokenPayload, error) {
 	}
 
 	tokenPayload := TokenPayload{
-		Id:    userId,
+		Id:    parsedUserId,
 		Email: email,
 		Role:  role[0],
 	}

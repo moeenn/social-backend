@@ -45,27 +45,15 @@ func (q *Queries) PostCreate(ctx context.Context, arg PostCreateParams) (Post, e
 	return i, err
 }
 
-const postDelete = `-- name: PostDelete :one
+const postDelete = `-- name: PostDelete :exec
 update posts
 set deleted_at = now()
 where id = $1
-returning id, title, content, created_by_id, comments_count, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) PostDelete(ctx context.Context, id uuid.UUID) (Post, error) {
-	row := q.db.QueryRow(ctx, postDelete, id)
-	var i Post
-	err := row.Scan(
-		&i.ID,
-		&i.Title,
-		&i.Content,
-		&i.CreatedByID,
-		&i.CommentsCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) PostDelete(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, postDelete, id)
+	return err
 }
 
 const postUpdate = `-- name: PostUpdate :one
@@ -99,6 +87,7 @@ func (q *Queries) PostUpdate(ctx context.Context, arg PostUpdateParams) (Post, e
 
 const postsList = `-- name: PostsList :many
 select id, title, content, created_by_id, comments_count, created_at, updated_at, deleted_at from posts
+where deleted_at is null
 order by created_at
 limit $1
 offset $2

@@ -9,7 +9,7 @@ with parent_comment_hierarchy_id as (
   where id = $5
 )
 insert into comments (id, content, post_id, created_by_id, hierarchy_id, parent_comment_id)
-values ($1, $2, $3, $4, (select hierarchy_id from parent_comment), $5)
+values ($1, $2, $3, $4, (select hierarchy_id from parent_comment_hierarchy_id), $5)
 returning *;
 
 

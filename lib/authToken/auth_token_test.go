@@ -10,7 +10,7 @@ import (
 
 func TestTokenCreateVerify(t *testing.T) {
 	testUser := TokenPayload{
-		Id:    uuid.NewString(),
+		Id:    uuid.New(),
 		Email: "some-test-user@site.com",
 		Role:  "ADMIN",
 	}

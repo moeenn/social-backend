@@ -61,7 +61,7 @@ func (s *AuthService) LoginUser(ctx context.Context, email, password string) (*L
 	}
 
 	tokenPayload := authToken.TokenPayload{
-		Id:    user.ID.String(),
+		Id:    user.ID,
 		Email: user.Email,
 		Role:  user.Role,
 	}

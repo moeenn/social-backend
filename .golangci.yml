@@ -8,4 +8,4 @@ linters:
     - contextcheck
     # - err113
     - gochecknoinits
-    - godox
+    # - godox

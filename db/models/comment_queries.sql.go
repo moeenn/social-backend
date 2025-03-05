@@ -52,15 +52,32 @@ func (q *Queries) CommentAdd(ctx context.Context, arg CommentAddParams) (Comment
 	return i, err
 }
 
-const commentDelete = `-- name: CommentDelete :one
-update comments
-set deleted_at = now()
-where id = $1
+const commentAddReply = `-- name: CommentAddReply :one
+with parent_comment_hierarchy_id as (
+  select hierarchy_id from comments
+  where id = $5
+)
+insert into comments (id, content, post_id, created_by_id, hierarchy_id, parent_comment_id)
+values ($1, $2, $3, $4, (select hierarchy_id from parent_comment_hierarchy_id), $5)
 returning id, content, post_id, likes_count, created_by_id, parent_comment_id, hierarchy_id, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) CommentDelete(ctx context.Context, id uuid.UUID) (Comment, error) {
-	row := q.db.QueryRow(ctx, commentDelete, id)
+type CommentAddReplyParams struct {
+	ID              uuid.UUID
+	Content         string
+	PostID          uuid.UUID
+	CreatedByID     uuid.UUID
+	ParentCommentID pgtype.UUID
+}
+
+func (q *Queries) CommentAddReply(ctx context.Context, arg CommentAddReplyParams) (Comment, error) {
+	row := q.db.QueryRow(ctx, commentAddReply,
+		arg.ID,
+		arg.Content,
+		arg.PostID,
+		arg.CreatedByID,
+		arg.ParentCommentID,
+	)
 	var i Comment
 	err := row.Scan(
 		&i.ID,
@@ -77,14 +94,15 @@ func (q *Queries) CommentDelete(ctx context.Context, id uuid.UUID) (Comment, err
 	return i, err
 }
 
-const commentGetById = `-- name: CommentGetById :one
-select id, content, post_id, likes_count, created_by_id, parent_comment_id, hierarchy_id, created_at, updated_at, deleted_at from comments
+const commentDelete = `-- name: CommentDelete :one
+update comments
+set deleted_at = now()
 where id = $1
-limit 1
+returning id, content, post_id, likes_count, created_by_id, parent_comment_id, hierarchy_id, created_at, updated_at, deleted_at
 `
 
-func (q *Queries) CommentGetById(ctx context.Context, id uuid.UUID) (Comment, error) {
-	row := q.db.QueryRow(ctx, commentGetById, id)
+func (q *Queries) CommentDelete(ctx context.Context, id uuid.UUID) (Comment, error) {
+	row := q.db.QueryRow(ctx, commentDelete, id)
 	var i Comment
 	err := row.Scan(
 		&i.ID,

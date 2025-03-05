@@ -11,6 +11,7 @@ import (
 	"sandbox/db/service"
 	"sandbox/lib/db"
 	"sandbox/lib/server"
+	"sandbox/lib/server/middleware"
 
 	"github.com/labstack/echo/v4"
 )
@@ -40,8 +41,10 @@ func run(ctx context.Context) error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	models := models.New(conn)
 	authService := service.NewAuthService(models, config.Jwt)
+	postService := service.NewPostService(models)
 	authController := controller.NewAuthController(logger, authService)
-	// authMiddleware := middleware.NewAuthMiddleware(config.Jwt, config.Auth)
+	postController := controller.NewPostController(config.Auth, postService)
+	authMiddleware := middleware.NewAuthMiddleware(config.Jwt, config.Auth)
 
 	// ---------------------------------------------------------------------------
 	//
@@ -55,7 +58,9 @@ func run(ctx context.Context) error {
 	{
 		api.POST("/login", authController.Login)
 		api.POST("/register", authController.RegisterNewUser)
-		// api.GET("/protected", protectedHandler.ProtectedRoute, authMiddleware.IsLoggedIn)
+		api.POST("/posts", postController.CreatePost, authMiddleware.IsLoggedIn)
+		api.PUT("/posts/:id", postController.UpdatePost, authMiddleware.IsLoggedIn)
+		api.DELETE("/posts/:id", postController.DeletePost, authMiddleware.IsLoggedIn)
 	}
 
 	// ---------------------------------------------------------------------------
@@ -74,20 +79,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
-// TODO: remove after testing.
-// type ProtectedHandler struct {
-// 	authConfig *config.AuthConfig
-// }
-
-// func (h *ProtectedHandler) ProtectedRoute(c echo.Context) error {
-// 	user, err := server.CurrentUser(c, h.authConfig.AuthUserContextKey)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return c.JSON(http.StatusOK, map[string]any{
-// 		"message":      "you have reached a protected route",
-// 		"current_user": user,
-// 	})
-// }
