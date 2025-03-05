@@ -9,7 +9,51 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const postById = `-- name: PostById :one
+select 
+	p.id,
+  p.title,
+  p.content,
+  p.created_by_id,
+  u.name as created_by_name,
+  p.comments_count,
+  p.created_at,
+  p.updated_at
+from posts p
+join users u on u.id = p.created_by_id
+where p.id = $1 and p.deleted_at is null
+limit 1
+`
+
+type PostByIdRow struct {
+	ID            uuid.UUID
+	Title         string
+	Content       string
+	CreatedByID   uuid.UUID
+	CreatedByName string
+	CommentsCount int32
+	CreatedAt     pgtype.Timestamp
+	UpdatedAt     pgtype.Timestamp
+}
+
+func (q *Queries) PostById(ctx context.Context, id uuid.UUID) (PostByIdRow, error) {
+	row := q.db.QueryRow(ctx, postById, id)
+	var i PostByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Content,
+		&i.CreatedByID,
+		&i.CreatedByName,
+		&i.CommentsCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const postCreate = `-- name: PostCreate :one
 insert into posts (id, title, content, created_by_id)
@@ -85,10 +129,32 @@ func (q *Queries) PostUpdate(ctx context.Context, arg PostUpdateParams) (Post, e
 	return i, err
 }
 
-const postsList = `-- name: PostsList :many
-select id, title, content, created_by_id, comments_count, created_at, updated_at, deleted_at from posts
+const postsCount = `-- name: PostsCount :one
+select count(*) from posts 
 where deleted_at is null
-order by created_at
+`
+
+func (q *Queries) PostsCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, postsCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const postsList = `-- name: PostsList :many
+select 
+	p.id,
+  p.title,
+  p.content,
+  p.created_by_id,
+  u.name as created_by_name,
+  p.comments_count,
+  p.created_at,
+  p.updated_at
+from posts p
+join users u on u.id = p.created_by_id
+where p.deleted_at is null
+order by p.created_at desc
 limit $1
 offset $2
 `
@@ -98,24 +164,35 @@ type PostsListParams struct {
 	Offset int32
 }
 
-func (q *Queries) PostsList(ctx context.Context, arg PostsListParams) ([]Post, error) {
+type PostsListRow struct {
+	ID            uuid.UUID
+	Title         string
+	Content       string
+	CreatedByID   uuid.UUID
+	CreatedByName string
+	CommentsCount int32
+	CreatedAt     pgtype.Timestamp
+	UpdatedAt     pgtype.Timestamp
+}
+
+func (q *Queries) PostsList(ctx context.Context, arg PostsListParams) ([]PostsListRow, error) {
 	rows, err := q.db.Query(ctx, postsList, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []PostsListRow
 	for rows.Next() {
-		var i Post
+		var i PostsListRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
 			&i.Content,
 			&i.CreatedByID,
+			&i.CreatedByName,
 			&i.CommentsCount,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

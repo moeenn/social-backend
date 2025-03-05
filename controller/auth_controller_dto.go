@@ -28,6 +28,7 @@ func (r *LoginRequestBody) Validate() error {
 type LoginResponseUser struct {
 	Id    string `json:"id"`
 	Email string `json:"email"`
+	Name  string `json:"name"`
 	Role  string `json:"role"`
 }
 
@@ -42,6 +43,7 @@ func LoginResponseFromLoginResult(result *service.LoginResult) *LoginResponse {
 		User: LoginResponseUser{
 			Id:    result.User.ID.String(),
 			Email: result.User.Email,
+			Name:  result.User.Name,
 			Role:  result.User.Role,
 		},
 		Token:  result.Token,
@@ -51,6 +53,7 @@ func LoginResponseFromLoginResult(result *service.LoginResult) *LoginResponse {
 
 type RegisterNewUserResquestBody struct {
 	Email           string `json:"email"`
+	Name            string `json:"name"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirmPassword"`
 }
@@ -58,6 +61,10 @@ type RegisterNewUserResquestBody struct {
 func (r *RegisterNewUserResquestBody) Validate() error {
 	if r.Email == "" || !strings.Contains(r.Email, "@") {
 		return errors.New("invalid email address")
+	}
+
+	if r.Name == "" || len(r.Name) < 3 {
+		return errors.New("invalid name provided")
 	}
 
 	if r.Password == "" || len(r.Password) < PASSWORD_MIN_LENGTH {

@@ -14,11 +14,38 @@ update posts
 set deleted_at = now()
 where id = $1;
 
+-- name: PostsCount :one
+select count(*) from posts 
+where deleted_at is null;
+
 -- name: PostsList :many
-select * from posts
-where deleted_at is null
-order by created_at
+select 
+	p.id,
+  p.title,
+  p.content,
+  p.created_by_id,
+  u.name as created_by_name,
+  p.comments_count,
+  p.created_at,
+  p.updated_at
+from posts p
+join users u on u.id = p.created_by_id
+where p.deleted_at is null
+order by p.created_at desc
 limit $1
 offset $2;
 
--- TODO: get post by id
+-- name: PostById :one
+select 
+	p.id,
+  p.title,
+  p.content,
+  p.created_by_id,
+  u.name as created_by_name,
+  p.comments_count,
+  p.created_at,
+  p.updated_at
+from posts p
+join users u on u.id = p.created_by_id
+where p.id = $1 and p.deleted_at is null
+limit 1;

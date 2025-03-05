@@ -49,4 +49,40 @@ func (s *PostService) DeletePost(ctx context.Context, postId uuid.UUID) error {
 	return nil
 }
 
-// TODO: implement post list method.
+type ListPostsResult struct {
+	Posts      []models.PostsListRow
+	TotalCount int64
+}
+
+func (s *PostService) ListPosts(ctx context.Context, params models.PostsListParams) (*ListPostsResult, error) {
+	postsCount, err := s.db.PostsCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	posts, err := s.db.PostsList(ctx, params)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return &ListPostsResult{Posts: []models.PostsListRow{}, TotalCount: 0}, nil
+		}
+		return nil, err
+	}
+
+	result := ListPostsResult{
+		Posts:      posts,
+		TotalCount: postsCount,
+	}
+
+	return &result, nil
+}
+
+func (s *PostService) GetPostById(ctx context.Context, postId uuid.UUID) (*models.PostByIdRow, error) {
+	post, err := s.db.PostById(ctx, postId)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("post not found")
+		}
+		return nil, err
+	}
+	return &post, nil
+}

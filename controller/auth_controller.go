@@ -59,6 +59,7 @@ func (c *AuthController) RegisterNewUser(ctx echo.Context) error {
 		ID:       uuid.New(),
 		Email:    registerNewUserRequestBody.Email,
 		Password: registerNewUserRequestBody.Password,
+		Name:     registerNewUserRequestBody.Name,
 		Role:     "USER",
 	}
 

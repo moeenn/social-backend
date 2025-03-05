@@ -12,7 +12,7 @@ import (
 )
 
 const userByEmail = `-- name: UserByEmail :one
-select id, email, password, role from users
+select id, email, password, name, role, created_at, deleted_at from users
 where email = $1
 limit 1
 `
@@ -24,14 +24,17 @@ func (q *Queries) UserByEmail(ctx context.Context, email string) (User, error) {
 		&i.ID,
 		&i.Email,
 		&i.Password,
+		&i.Name,
 		&i.Role,
+		&i.CreatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const userByID = `-- name: UserByID :one
-select id, email, password, role from users
-where id = $1
+select id, email, password, name, role, created_at, deleted_at from users
+where id = $1 and deleted_at is null
 limit 1
 `
 
@@ -42,21 +45,25 @@ func (q *Queries) UserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.ID,
 		&i.Email,
 		&i.Password,
+		&i.Name,
 		&i.Role,
+		&i.CreatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const userCreate = `-- name: UserCreate :one
-insert into users (id, email, password, role)
-values ($1, $2, $3, $4)
-returning id, email, password, role
+insert into users (id, email, password, name, role)
+values ($1, $2, $3, $4, $5)
+returning id, email, password, name, role, created_at, deleted_at
 `
 
 type UserCreateParams struct {
 	ID       uuid.UUID
 	Email    string
 	Password string
+	Name     string
 	Role     string
 }
 
@@ -65,6 +72,7 @@ func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, e
 		arg.ID,
 		arg.Email,
 		arg.Password,
+		arg.Name,
 		arg.Role,
 	)
 	var i User
@@ -72,31 +80,28 @@ func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (User, e
 		&i.ID,
 		&i.Email,
 		&i.Password,
+		&i.Name,
 		&i.Role,
+		&i.CreatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
-const userDelete = `-- name: UserDelete :one
-delete from users
+const userDelete = `-- name: UserDelete :exec
+update users
+set deleted_at = now()
 where id = $1
-returning id, email, password, role
 `
 
-func (q *Queries) UserDelete(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRow(ctx, userDelete, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Password,
-		&i.Role,
-	)
-	return i, err
+func (q *Queries) UserDelete(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, userDelete, id)
+	return err
 }
 
 const userList = `-- name: UserList :many
-select id, email, password, role from users
+select id, email, password, name, role, created_at, deleted_at from users
+where deleted_at is null
 limit $1
 offset $2
 `
@@ -119,7 +124,10 @@ func (q *Queries) UserList(ctx context.Context, arg UserListParams) ([]User, err
 			&i.ID,
 			&i.Email,
 			&i.Password,
+			&i.Name,
 			&i.Role,
+			&i.CreatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -133,6 +141,7 @@ func (q *Queries) UserList(ctx context.Context, arg UserListParams) ([]User, err
 
 const userListCount = `-- name: UserListCount :one
 select count(*) from users
+where deleted_at is null
 `
 
 func (q *Queries) UserListCount(ctx context.Context) (int64, error) {
@@ -144,25 +153,34 @@ func (q *Queries) UserListCount(ctx context.Context) (int64, error) {
 
 const userUpdate = `-- name: UserUpdate :one
 update users
-set role = $2, password = $3
+set password = $2, name = $3, role = $4
 where id = $1
-returning id, email, password, role
+returning id, email, password, name, role, created_at, deleted_at
 `
 
 type UserUpdateParams struct {
 	ID       uuid.UUID
-	Role     string
 	Password string
+	Name     string
+	Role     string
 }
 
 func (q *Queries) UserUpdate(ctx context.Context, arg UserUpdateParams) (User, error) {
-	row := q.db.QueryRow(ctx, userUpdate, arg.ID, arg.Role, arg.Password)
+	row := q.db.QueryRow(ctx, userUpdate,
+		arg.ID,
+		arg.Password,
+		arg.Name,
+		arg.Role,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Password,
+		&i.Name,
 		&i.Role,
+		&i.CreatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

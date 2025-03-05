@@ -61,6 +61,8 @@ func run(ctx context.Context) error {
 		api.POST("/posts", postController.CreatePost, authMiddleware.IsLoggedIn)
 		api.PUT("/posts/:id", postController.UpdatePost, authMiddleware.IsLoggedIn)
 		api.DELETE("/posts/:id", postController.DeletePost, authMiddleware.IsLoggedIn)
+		api.GET("/posts", postController.ListPosts)
+		api.GET("/posts/:id", postController.GetPostById)
 	}
 
 	// ---------------------------------------------------------------------------

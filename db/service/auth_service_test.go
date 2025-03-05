@@ -34,6 +34,7 @@ func TestRegistrationAndLogin(t *testing.T) {
 		assert.Equal(t, userInput.ID.String(), user.ID.String())
 		assert.Equal(t, userInput.Email, user.Email)
 		assert.NotEqual(t, userInput.Password, user.Password)
+		assert.Equal(t, userInput.Name, user.Name)
 		assert.Equal(t, userInput.Role, user.Role)
 	}
 
@@ -41,6 +42,7 @@ func TestRegistrationAndLogin(t *testing.T) {
 		ID:       uuid.New(),
 		Email:    "customer@site.com",
 		Password: "secret-password",
+		Name:     "Mr. Customer",
 		Role:     "CUSTOMER",
 	}
 

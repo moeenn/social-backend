@@ -6,6 +6,7 @@ import (
 	"sandbox/db/models"
 	"sandbox/db/service"
 	"sandbox/lib/server"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -60,6 +61,7 @@ func (c *PostController) UpdatePost(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid post id")
 	}
 
+	// TODO: extract parseUUID to function.
 	parsedPostId, err := uuid.Parse(postId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid post id")
@@ -108,4 +110,60 @@ func (c *PostController) DeletePost(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, server.MessageResponse{
 		Message: "post deleted successfully",
 	})
+}
+
+func (c *PostController) ListPosts(ctx echo.Context) error {
+	// parse limit query param
+	var limit int32 = 10
+	limitString := ctx.QueryParam("limit")
+	if limitString != "" {
+		parsedLimit, err := strconv.Atoi(limitString)
+		if err == nil {
+			//nolint:gosec
+			limit = int32(parsedLimit)
+		}
+	}
+
+	// TODO: extract to function.
+	// parse offset query param
+	var offset int32 = 0
+	offsetString := ctx.QueryParam("offset")
+	if offsetString != "" {
+		parsedOffset, err := strconv.Atoi(offsetString)
+		if err == nil {
+			//nolint:gosec
+			offset = int32(parsedOffset)
+		}
+	}
+
+	postsResult, err := c.postService.ListPosts(ctx.Request().Context(), models.PostsListParams{
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := ListPostsResponseFromListPostsResult(postsResult)
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+func (c *PostController) GetPostById(ctx echo.Context) error {
+	postId := ctx.Param("id")
+	if postId == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid post id")
+	}
+
+	parsedPostId, err := uuid.Parse(postId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid post id")
+	}
+
+	post, err := c.postService.GetPostById(ctx.Request().Context(), parsedPostId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	resp := PostWithCreatedByResponseFromPostById(post)
+	return ctx.JSON(http.StatusOK, resp)
 }

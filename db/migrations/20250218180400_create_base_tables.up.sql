@@ -3,7 +3,10 @@ create table
     id uuid not null,
     email varchar(255) not null,
     password text not null,
+    name varchar (500) not null,
     role varchar(255) not null,
+    created_at timestamp default now(),
+    deleted_at timestamp null,
     primary key (id),
     constraint email_unique unique (email)
   );
@@ -19,7 +22,8 @@ create table
     updated_at timestamp null,
     deleted_at timestamp null,
     primary key (id),
-    constraint fk_created_by_id foreign key (created_by_id) references users (id)
+    constraint fk_created_by_id foreign key (created_by_id) references users (id),
+    constraint comment_count_not_negative check (comments_count >= 0)
   );
 
 create table
@@ -37,7 +41,8 @@ create table
     primary key (id),
     constraint fk_post_id foreign key (post_id) references posts (id),
     constraint fk_created_by_id foreign key (created_by_id) references users (id),
-    constraint fk_parent_comment_id foreign key (parent_comment_id) references comments (id)
+    constraint fk_parent_comment_id foreign key (parent_comment_id) references comments (id),
+    constraint likes_count_not_negative check (likes_count >= 0)
   );
 
 create table

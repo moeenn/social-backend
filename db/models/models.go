@@ -39,8 +39,11 @@ type Post struct {
 }
 
 type User struct {
-	ID       uuid.UUID
-	Email    string
-	Password string
-	Role     string
+	ID        uuid.UUID
+	Email     string
+	Password  string
+	Name      string
+	Role      string
+	CreatedAt pgtype.Timestamp
+	DeletedAt pgtype.Timestamp
 }
