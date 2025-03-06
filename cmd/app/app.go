@@ -40,11 +40,11 @@ func run(ctx context.Context) error {
 	// ---------------------------------------------------------------------------
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	models := models.New(conn)
-	authService := service.NewAuthService(models, config.Jwt)
+	authService := service.NewAuthService(models, config.Auth)
 	postService := service.NewPostService(models)
 	authController := controller.NewAuthController(logger, authService)
 	postController := controller.NewPostController(config.Auth, postService)
-	authMiddleware := middleware.NewAuthMiddleware(config.Jwt, config.Auth)
+	authMiddleware := middleware.NewAuthMiddleware(config.Auth)
 
 	// ---------------------------------------------------------------------------
 	//

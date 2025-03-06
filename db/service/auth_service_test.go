@@ -21,10 +21,13 @@ func TestRegistrationAndLogin(t *testing.T) {
 	assert.NoError(t, err)
 
 	queries := models.New(conn)
-	jwtConfig := config.JwtConfig{
-		Secret: "some-super-secret-token",
-		Issuer: "sample.com",
-		Expiry: time.Hour,
+	jwtConfig := config.AuthConfig{
+		Jwt: &config.JwtConfig{
+			Secret: "some-super-secret-token",
+			Issuer: "sample.com",
+			Expiry: time.Hour,
+		},
+		AuthUserContextKey: "user",
 	}
 
 	userService := NewAuthService(queries, &jwtConfig)

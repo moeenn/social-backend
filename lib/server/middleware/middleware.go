@@ -14,12 +14,12 @@ type AuthMiddeware struct {
 	authConfig *config.AuthConfig
 }
 
-func NewAuthMiddleware(jwtConfig *config.JwtConfig, authConfig *config.AuthConfig) *AuthMiddeware {
+func NewAuthMiddleware(authConfig *config.AuthConfig) *AuthMiddeware {
 	return &AuthMiddeware{
 		jwtConfig: &authToken.JwtConfig{
-			Issuer: jwtConfig.Issuer,
-			Secret: jwtConfig.Secret,
-			Expiry: jwtConfig.Expiry,
+			Issuer: authConfig.Jwt.Issuer,
+			Secret: authConfig.Jwt.Secret,
+			Expiry: authConfig.Jwt.Expiry,
 		},
 		authConfig: authConfig,
 	}

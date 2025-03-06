@@ -16,13 +16,13 @@ type AuthService struct {
 	jwtConfig *authToken.JwtConfig
 }
 
-func NewAuthService(db *models.Queries, jwtConfig *config.JwtConfig) *AuthService {
+func NewAuthService(db *models.Queries, authConfig *config.AuthConfig) *AuthService {
 	return &AuthService{
 		db: db,
 		jwtConfig: &authToken.JwtConfig{
-			Secret: jwtConfig.Secret,
-			Issuer: jwtConfig.Issuer,
-			Expiry: jwtConfig.Expiry,
+			Secret: authConfig.Jwt.Secret,
+			Issuer: authConfig.Jwt.Issuer,
+			Expiry: authConfig.Jwt.Expiry,
 		},
 	}
 }

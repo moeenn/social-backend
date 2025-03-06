@@ -20,7 +20,6 @@ const (
 
 type Config struct {
 	Database *DatabaseConfig
-	Jwt      *JwtConfig
 	Auth     *AuthConfig
 	Server   *ServerConfig
 }
@@ -31,17 +30,14 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	jwtConfig, err := NewJwtConfig()
+	serverConfig := NewServerConfig()
+	authConfig, err := NewAuthConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	serverConfig := NewServerConfig()
-	authConfig := NewAuthConfig()
-
 	config := Config{
 		Database: dbConfig,
-		Jwt:      jwtConfig,
 		Auth:     authConfig,
 		Server:   serverConfig,
 	}
@@ -62,32 +58,6 @@ func NewDatabaseConfig() (*DatabaseConfig, error) {
 	return &DatabaseConfig{
 		ConnectionURI: connectionURI,
 	}, nil
-}
-
-type JwtConfig struct {
-	Secret string
-	Issuer string
-	Expiry time.Duration
-}
-
-func NewJwtConfig() (*JwtConfig, error) {
-	secret := os.Getenv(ENV_JWT_SECRET)
-	if secret == "" {
-		return nil, fmt.Errorf("%s is not set", ENV_JWT_SECRET)
-	}
-
-	issuer := os.Getenv(ENV_JWT_ISSUER)
-	if issuer == "" {
-		return nil, fmt.Errorf("%s is not set", ENV_JWT_ISSUER)
-	}
-
-	config := &JwtConfig{
-		Secret: secret,
-		Issuer: issuer,
-		Expiry: CONF_DEFAULT_JWT_EXPIRY,
-	}
-
-	return config, nil
 }
 
 type ServerConfig struct {
@@ -118,12 +88,47 @@ func (c *ServerConfig) Address() string {
 	return c.Host + ":" + c.Port
 }
 
-type AuthConfig struct {
-	AuthUserContextKey string
+type JwtConfig struct {
+	Secret string
+	Issuer string
+	Expiry time.Duration
 }
 
-func NewAuthConfig() *AuthConfig {
-	return &AuthConfig{
-		AuthUserContextKey: CONF_AUTH_USER_CONTEXT_KEY,
+func NewJwtConfig() (*JwtConfig, error) {
+	secret := os.Getenv(ENV_JWT_SECRET)
+	if secret == "" {
+		return nil, fmt.Errorf("%s is not set", ENV_JWT_SECRET)
 	}
+
+	issuer := os.Getenv(ENV_JWT_ISSUER)
+	if issuer == "" {
+		return nil, fmt.Errorf("%s is not set", ENV_JWT_ISSUER)
+	}
+
+	config := &JwtConfig{
+		Secret: secret,
+		Issuer: issuer,
+		Expiry: CONF_DEFAULT_JWT_EXPIRY,
+	}
+
+	return config, nil
+}
+
+type AuthConfig struct {
+	AuthUserContextKey string
+	Jwt                *JwtConfig
+}
+
+func NewAuthConfig() (*AuthConfig, error) {
+	jwtConfig, err := NewJwtConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	config := AuthConfig{
+		AuthUserContextKey: CONF_AUTH_USER_CONTEXT_KEY,
+		Jwt:                jwtConfig,
+	}
+
+	return &config, nil
 }
