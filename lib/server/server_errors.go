@@ -15,7 +15,7 @@ func GlobalErrorHandler(err error, c echo.Context) {
 	if he, ok := err.(*echo.HTTPError); ok {
 		message, ok := he.Message.(string)
 		if !ok {
-			message = "unknown error occured"
+			message = "unknown error occurred"
 		}
 
 		_ = c.JSON(he.Code, ErrorResponse{
